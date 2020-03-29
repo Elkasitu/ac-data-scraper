@@ -1,0 +1,4 @@
+.python-version
+images/
+*.xml
+__pycache__
