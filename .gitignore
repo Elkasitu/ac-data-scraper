@@ -1,4 +1,6 @@
 .python-version
 images/
+data/
 *.xml
 __pycache__
+tags
