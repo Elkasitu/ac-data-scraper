@@ -1,0 +1,34 @@
+{
+    "acnh": {
+        "fish_nh": {
+            "endpoint": "Fish_(New_Horizons)",
+            "table_xpath": "//div[@title='Northern Hemisphere']/table[@class='roundy']/tr/td/table"
+        },
+        "bugs_nh": {
+            "endpoint": "Bugs_(New_Horizons)",
+            "table_xpath": "//div[@title='Northern Hemisphere']/table[@class='roundy']/tr/td/table"
+        },
+        "fish_sh": {
+            "endpoint": "Fish_(New_Horizons)",
+            "table_xpath": "//div[@title='Southern Hemisphere']/table[@class='roundy']/tr/td/table"
+        },
+        "bugs_sh": {
+            "endpoint": "Bugs_(New_Horizons)",
+            "table_xpath": "//div[@title='Southern Hemisphere']/table[@class='roundy']/tr/td/table"
+        }
+    },
+    "acnl": {
+        "fish": {
+            "endpoint": "Fish_(New_Leaf)",
+            "table_xpath": "//div[@id='mw-content-text']/table[@class='roundy'][2]/tr/td/table"
+        },
+        "bugs": {
+            "endpoint": "Bugs_(New_Leaf)",
+            "table_xpath": "//div[@id='mw-content-text']/table[@class='roundy'][2]/tr/td/table"
+        },
+        "underwater": {
+            "endpoint": "Deep-sea_creatures",
+            "table_xpath": "//div[@id='mw-content-text']/table[@class='roundy'][2]/tr/td/table"
+        }
+    }
+}
