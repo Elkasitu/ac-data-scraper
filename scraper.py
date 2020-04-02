@@ -6,6 +6,8 @@ from pathlib import Path
 
 
 BASE_URL = "https://animalcrossing.fandom.com/wiki/"
+MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+AVAILABILITY_TAG = "availability"
 
 
 def get_resources():
@@ -38,6 +40,10 @@ def save_image(img, image_path):
     raise ValueError("Could not process image %r" % img)
 
 
+def get_col_text(col):
+    return max(col.xpath("descendant::text()")).strip()
+
+
 def build_tree(resource, image_path):
     parsed = etree.HTML(requests.get(BASE_URL + resource['endpoint']).text)
     rows = get_rows(get_table(parsed, resource['table_xpath']))
@@ -46,21 +52,31 @@ def build_tree(resource, image_path):
     headers = [col.text.strip().lower() for col in next(rows).iterchildren(tag='th')]
     for row in rows:
         record = etree.Element("Record")
+        # Initialize availability tag before the loop as it will be updated when a month
+        # column is encountered
+        availability = etree.Element(AVAILABILITY_TAG)
+        availability.text = '0' * 12
         for header, col in zip(headers, row):
-            el = etree.Element(header.replace(' ', '_'))
-
-            img = col.xpath('descendant::img[last()]')
-            if img and header == 'image':
-                name = save_image(img[0], image_path)
-                el.text = name
-            else:
-                text = max(col.xpath("descendant::text()")).strip()
+            if header in MONTHS:
+                text = get_col_text(col)
                 if text == '✓':
-                    text = 'true'
+                    text = '1'
                 elif text == '-':
-                    text = 'false'
-                el.text = text
-            record.append(el)
+                    text = '0'
+                index = MONTHS.index(header)
+                availability.text = availability.text[:index] + text + availability.text[index + 1:]
+            else:
+                el = etree.Element(header.replace(' ', '_'))
+
+                img = col.xpath('descendant::img[last()]')
+                if img and header == 'image':
+                    name = save_image(img[0], image_path)
+                    el.text = name
+                else:
+                    text = get_col_text(col)
+                    el.text = text
+                record.append(el)
+        record.append(availability)
         record_list.append(record)
     return record_list
 
