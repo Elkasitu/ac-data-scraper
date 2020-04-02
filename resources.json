@@ -2,33 +2,40 @@
     "acnh": {
         "fish_nh": {
             "endpoint": "Fish_(New_Horizons)",
-            "table_xpath": "//div[@title='Northern Hemisphere']/table[@class='roundy']/tr/td/table"
+            "table_xpath": "//div[@title='Northern Hemisphere']/table[@class='roundy']/tr/td/table",
+            "uid_offset": 100
         },
         "bugs_nh": {
             "endpoint": "Bugs_(New_Horizons)",
-            "table_xpath": "//div[@title='Northern Hemisphere']/table[@class='roundy']/tr/td/table"
+            "table_xpath": "//div[@title='Northern Hemisphere']/table[@class='roundy']/tr/td/table",
+            "uid_offset": 200
         },
         "fish_sh": {
             "endpoint": "Fish_(New_Horizons)",
-            "table_xpath": "//div[@title='Southern Hemisphere']/table[@class='roundy']/tr/td/table"
+            "table_xpath": "//div[@title='Southern Hemisphere']/table[@class='roundy']/tr/td/table",
+            "uid_offset": 100
         },
         "bugs_sh": {
             "endpoint": "Bugs_(New_Horizons)",
-            "table_xpath": "//div[@title='Southern Hemisphere']/table[@class='roundy']/tr/td/table"
+            "table_xpath": "//div[@title='Southern Hemisphere']/table[@class='roundy']/tr/td/table",
+            "uid_offset": 200
         }
     },
     "acnl": {
         "fish": {
             "endpoint": "Fish_(New_Leaf)",
-            "table_xpath": "//div[@id='mw-content-text']/table[@class='roundy'][2]/tr/td/table"
+            "table_xpath": "//div[@id='mw-content-text']/table[@class='roundy'][2]/tr/td/table",
+            "uid_offset": 300
         },
         "bugs": {
             "endpoint": "Bugs_(New_Leaf)",
-            "table_xpath": "//div[@id='mw-content-text']/table[@class='roundy'][2]/tr/td/table"
+            "table_xpath": "//div[@id='mw-content-text']/table[@class='roundy'][2]/tr/td/table",
+            "uid_offset": 400
         },
         "underwater": {
             "endpoint": "Deep-sea_creatures",
-            "table_xpath": "//div[@id='mw-content-text']/table[@class='roundy'][2]/tr/td/table"
+            "table_xpath": "//div[@id='mw-content-text']/table[@class='roundy'][2]/tr/td/table",
+            "uid_offset": 500
         }
     }
 }

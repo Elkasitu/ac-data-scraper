@@ -8,6 +8,7 @@ from pathlib import Path
 BASE_URL = "https://animalcrossing.fandom.com/wiki/"
 MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
 AVAILABILITY_TAG = "availability"
+UID_TAG = "id"
 
 
 def get_resources():
@@ -48,6 +49,8 @@ def build_tree(resource, image_path):
     parsed = etree.HTML(requests.get(BASE_URL + resource['endpoint']).text)
     rows = get_rows(get_table(parsed, resource['table_xpath']))
     record_list = etree.Element("RecordList")
+    uid_offset = resource['uid_offset']
+    uid = 1
 
     headers = [col.text.strip().lower() for col in next(rows).iterchildren(tag='th')]
     for row in rows:
@@ -56,6 +59,13 @@ def build_tree(resource, image_path):
         # column is encountered
         availability = etree.Element(AVAILABILITY_TAG)
         availability.text = '0' * 12
+
+        # Update record id
+        el = etree.Element(UID_TAG)
+        el.text = f'{uid_offset + uid}'
+        uid += 1
+        record.append(el)
+
         for header, col in zip(headers, row):
             if header in MONTHS:
                 text = get_col_text(col)
