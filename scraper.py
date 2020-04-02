@@ -28,7 +28,7 @@ def get_rows(table):
 
 def save_image(img, image_path):
     url = img.get('src')
-    name = img.get('data-image-key')
+    name = img.get('data-image-key').replace('-', '_').lower()
     r = requests.get(url, stream=True)
     if r.status_code == 200:
         with image_path.joinpath(name).open('wb') as f:
