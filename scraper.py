@@ -91,6 +91,26 @@ def build_tree(resource, image_path):
     return record_list
 
 
+def convert_to_resource(s):
+    """Converts a string into a valid resource string, e.g. converts "as-d f(g)" into "as_d_fg"."""
+    to_underscore = [' ', '-']
+    to_remove = ['\'', '(', ')']
+    for c in to_underscore:
+        s = s.replace(c, '_')
+    for c in to_remove:
+        s = s.replace(c, '')
+    return s
+
+
+def names_to_resources(tree):
+    """Converts the name and location fields so instead of <name>Some Fish</name> they become <name>some_fish</name>"""
+    for name in tree.iter('name'):
+        name.text = convert_to_resource(name.text)
+
+    for location in tree.iter('location'):
+        location.text = convert_to_resource(location.text)
+
+
 def main():
     init_directories()
     resources = get_resources()
@@ -104,6 +124,7 @@ def main():
         for resource in game_resources:
             res = game_resources[resource]
             tree = build_tree(res, image_path)
+            names_to_resources(tree)
             with data_path.joinpath(resource + '.xml').open('wb') as f:
                 f.write(etree.tostring(tree, pretty_print=True))
 
