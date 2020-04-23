@@ -29,8 +29,13 @@ def get_rows(table):
     return table.iterchildren(tag='tr')
 
 
+def get_full_size_src(img):
+    i = img.find('revision') - 1
+    return img[:i]
+
+
 def save_image(img, image_path):
-    url = img.get('src')
+    url = get_full_size_src(img.get('src'))
     name = img.get('data-image-key').replace('-', '_').lower()
     r = requests.get(url, stream=True)
     if r.status_code == 200:
