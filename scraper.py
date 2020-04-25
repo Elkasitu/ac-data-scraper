@@ -1,4 +1,6 @@
+import itertools
 import json
+import re
 import requests
 
 from lxml import etree
@@ -21,12 +23,12 @@ def init_directories():
     Path('./data/').mkdir(exist_ok=True)
 
 
-def get_table(parsed, table_xpath):
-    return parsed.xpath(table_xpath)[0]
+def get_tables(parsed, table_xpath):
+    return parsed.xpath(table_xpath)
 
 
-def get_rows(table):
-    return table.iterchildren(tag='tr')
+def get_rows(tables):
+    return itertools.chain(*[t.iterchildren(tag='tr') for t in tables])
 
 
 def get_full_size_src(img):
@@ -36,14 +38,14 @@ def get_full_size_src(img):
 
 def save_image(img, image_path):
     url = get_full_size_src(img.get('src'))
-    name = img.get('data-image-key').replace('-', '_').lower()
-    r = requests.get(url, stream=True)
-    if r.status_code == 200:
+    name = sanitize(img.get('data-image-key'))
+    request = requests.get(url, stream=True)
+    if request.status_code == 200:
         with image_path.joinpath(name).open('wb') as f:
-            for chunk in r:
+            for chunk in request:
                 f.write(chunk)
         return name
-    raise ValueError("Could not process image %r" % img)
+    raise ValueError("Could not process image %r (rate-limited?)" % img)
 
 
 def get_col_text(col):
@@ -52,13 +54,17 @@ def get_col_text(col):
 
 def build_tree(resource, image_path):
     parsed = etree.HTML(requests.get(BASE_URL + resource['endpoint']).text)
-    rows = get_rows(get_table(parsed, resource['table_xpath']))
+    rows = get_rows(get_tables(parsed, resource['table_xpath']))
     record_list = etree.Element("RecordList")
     uid_offset = resource['uid_offset']
     uid = 1
 
     headers = [col.text.strip().lower() for col in next(rows).iterchildren(tag='th')]
     for row in rows:
+        if row.find('th') is not None:
+            # there may be table heads interspersed between actual content, we don't
+            # care about this stuff normally
+            continue
         record = etree.Element("Record")
         # Initialize availability tag before the loop as it will be updated when a month
         # column is encountered
@@ -81,39 +87,40 @@ def build_tree(resource, image_path):
                 index = MONTHS.index(header)
                 availability.text = availability.text[:index] + text + availability.text[index + 1:]
             else:
-                el = etree.Element(header.replace(' ', '_'))
+                el = etree.Element(sanitize(header))
 
                 img = col.xpath('descendant::img[last()]')
                 if img and header == 'image':
                     name = save_image(img[0], image_path)
                     el.text = name
+                elif header == 'price':
+                    text = get_col_text(col)
+                    if not text.isdigit():
+                        text = text.split()[0]
+                        text = text.replace(',', '')
+                    el.text = text
                 else:
                     text = get_col_text(col)
                     el.text = text
                 record.append(el)
-        record.append(availability)
+        if availability.text != ('0' * 12):
+            record.append(availability)
         record_list.append(record)
     return record_list
 
 
-def convert_to_resource(s):
-    """Converts a string into a valid resource string, e.g. converts "as-d f(g)" into "as_d_fg"."""
-    to_underscore = [' ', '-']
-    to_remove = ['\'', '(', ')']
-    for c in to_underscore:
-        s = s.replace(c, '_')
-    for c in to_remove:
-        s = s.replace(c, '')
-    return s
+def sanitize(s):
+    """ Converts non-alphanumeric characters to _ """
+    return re.sub(r'\W(?!(png|jpg))', '_', s).lower()
 
 
 def names_to_resources(tree):
     """Converts the name and location fields so instead of <name>Some Fish</name> they become <name>some_fish</name>"""
     for name in tree.iter('name'):
-        name.text = convert_to_resource(name.text)
+        name.text = sanitize(name.text)
 
     for location in tree.iter('location'):
-        location.text = convert_to_resource(location.text)
+        location.text = sanitize(location.text)
 
 
 def main():

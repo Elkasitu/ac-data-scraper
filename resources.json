@@ -19,6 +19,11 @@
             "endpoint": "Bugs_(New_Horizons)",
             "table_xpath": "//div[@title='Southern Hemisphere']/table[@class='roundy']/tr/td/table",
             "uid_offset": 200
+        },
+        "fossils": {
+            "endpoint": "Fossils_(New_Horizons)",
+            "table_xpath": "//table[@class='roundy']/tr/td/table",
+            "uid_offset": 600
         }
     },
     "acnl": {
@@ -36,6 +41,11 @@
             "endpoint": "Deep-sea_creatures",
             "table_xpath": "//div[@id='mw-content-text']/table[@class='roundy'][2]/tr/td/table",
             "uid_offset": 500
+        },
+        "fossils": {
+            "endpoint": "Fossils_(New_Leaf)",
+            "table_xpath": "//table[@class='roundy']/tr/td/table",
+            "uid_offset": 700
         }
     }
 }
