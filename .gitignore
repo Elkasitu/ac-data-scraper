@@ -1,6 +1,8 @@
 .python-version
 images/
 data/
+values*
 *.xml
 __pycache__
 tags
+.idea

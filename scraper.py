@@ -1,3 +1,5 @@
+import collections
+import functools
 import itertools
 import json
 import re
@@ -11,6 +13,8 @@ BASE_URL = "https://animalcrossing.fandom.com/wiki/"
 MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
 AVAILABILITY_TAG = "availability"
 UID_TAG = "id"
+TRANSLATABLE_TAGS = {'specific': ['name'], 'generic': ['location']}
+RESERVED_KEYWORDS = ["char"]
 
 
 def get_resources():
@@ -21,6 +25,7 @@ def get_resources():
 def init_directories():
     Path('./images/').mkdir(exist_ok=True)
     Path('./data/').mkdir(exist_ok=True)
+    Path('./values/').mkdir(exist_ok=True)
 
 
 def get_tables(parsed, table_xpath):
@@ -41,10 +46,14 @@ def save_image(img, image_path):
     name = sanitize(img.get('data-image-key'))
     request = requests.get(url, stream=True)
     if request.status_code == 200:
-        with image_path.joinpath(name).open('wb') as f:
-            for chunk in request:
-                f.write(chunk)
-        return name
+        try:
+            with image_path.joinpath(name).open('wb') as f:
+                for chunk in request:
+                    f.write(chunk)
+            return name
+        except Exception:
+            import pdb; pdb.set_trace()
+            pass
     raise ValueError("Could not process image %r (rate-limited?)" % img)
 
 
@@ -111,21 +120,40 @@ def build_tree(resource, image_path):
 
 def sanitize(s):
     """ Converts non-alphanumeric characters to _ """
-    return re.sub(r'\W(?!(png|jpg))', '_', s).lower()
+    res = re.sub(r'\W(?!(png|jpg))', '_', s).lower()
+    if res in RESERVED_KEYWORDS:
+        res = f'_{res}'
+    return res
 
 
-def names_to_resources(tree):
-    """Converts the name and location fields so instead of <name>Some Fish</name> they become <name>some_fish</name>"""
-    for name in tree.iter('name'):
-        name.text = sanitize(name.text)
+def term_to_xml(term, value):
+    node = etree.Element('string')
+    node.attrib['name'] = term
+    node.text = value.replace('\'', '\\\'')
+    return node
 
-    for location in tree.iter('location'):
-        location.text = sanitize(location.text)
+
+def extract_terms(source, target, _type):
+    """
+    Extract translatable terms from source tree, puts them into target tree if they're not in
+    done_terms
+    """
+    existing_terms = {e.attrib['name'] for e in target}
+    for term in itertools.chain(*[source.iter(tag) for tag in TRANSLATABLE_TAGS[_type]]):
+        sanitized = sanitize(term.text)
+        if sanitized and sanitized not in existing_terms:
+            target.append(term_to_xml(sanitized, term.text))
+            existing_terms.add(sanitized)
+        term.text = sanitized
 
 
 def main():
     init_directories()
     resources = get_resources()
+    resource_factory = functools.partial(etree.Element, 'resources')
+    l18n_dict = collections.defaultdict(resource_factory)
+    generic_l18n = etree.Element('resources')
+
     for game in resources:
         game_resources = resources[game]
         image_path = Path(f'./images/{game}/')
@@ -136,9 +164,20 @@ def main():
         for resource in game_resources:
             res = game_resources[resource]
             tree = build_tree(res, image_path)
-            names_to_resources(tree)
+            t_res = resource
+            if resource.endswith(("_nh", "_sh")):
+                t_res = resource.split('_')[0]
+            extract_terms(tree, l18n_dict[t_res], 'specific')
+            extract_terms(tree, generic_l18n, 'generic')
             with data_path.joinpath(resource + '.xml').open('wb') as f:
                 f.write(etree.tostring(tree, pretty_print=True))
+
+    for k, v in l18n_dict.items():
+        with Path(f'./values/{k}_strings.xml').open('wb') as f:
+            f.write(etree.tostring(v, pretty_print=True))
+
+    with Path("./values/strings.xml").open('wb') as f:
+        f.write(etree.tostring(generic_l18n, pretty_print=True))
 
 
 if __name__ == '__main__':
